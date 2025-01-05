@@ -9,7 +9,7 @@ from langdetect.lang_detect_exception import LangDetectException
 DetectorFactory.seed = 0
 
 yt_client = build(
-    "youtube", "v3", developerKey="AIzaSyCt21TFlMPQ1MSjB0tfB0Z_3AT6KkbGKRk"
+    "youtube", "v3", developerKey="removed a"
 )
 
 # Regular expression to detect emojis and Hindi script
