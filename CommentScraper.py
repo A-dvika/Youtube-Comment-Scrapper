@@ -4,12 +4,12 @@ from googleapiclient.errors import HttpError
 import csv
 from langdetect import detect, DetectorFactory
 from langdetect.lang_detect_exception import LangDetectException
-
+import os
 # Ensure consistent language detection
 DetectorFactory.seed = 0
 
 yt_client = build(
-    "youtube", "v3", developerKey="removed a"
+    "youtube", "v3", developerKey=""
 )
 
 # Regular expression to detect emojis and Hindi script
@@ -139,6 +139,34 @@ hinglish_dict = {
                     }
 
 
+# Define file paths
+hindi_file_path = "hindi.csv"
+english_file_path = "english.csv"
+hinglish_file_path = "hinglish.csv"
+
+# Function to open file in append mode and write header if needed
+def open_csv_with_header(file_path, header):
+    new_file = not os.path.exists(file_path)  # Check if file exists
+    file = open(file_path, "a", newline="", encoding="utf-8")
+    writer = csv.writer(file)
+    
+    if new_file:  # If it's a new file, write the header
+        writer.writerow(header)
+    
+    return file, writer
+
+# Open CSV files in append mode
+hindi_file, hindi_writer = open_csv_with_header(hindi_file_path, ["comments", "emoji"])
+english_file, english_writer = open_csv_with_header(english_file_path, ["comments", "emoji"])
+hinglish_file, hinglish_writer = open_csv_with_header(hinglish_file_path, ["comments", "emoji"])
+
+# Counters for statistics
+total_comments = 0
+english_count = 0
+hindi_count = 0
+hinglish_count = 0
+
+# Function to get comments from YouTube API
 def get_comments(client, video_id, token=None):
     """Fetch comments from YouTube API."""
     try:
@@ -161,13 +189,11 @@ def get_comments(client, video_id, token=None):
         print(f"Error: {e}")
         return None
 
-
 def extract_emojis_and_clean(text):
     """Extract emojis and return cleaned text and emojis."""
     emojis = ''.join(emoji_pattern.findall(text))
     cleaned_text = emoji_pattern.sub('', text).strip()
     return cleaned_text, emojis
-
 
 def detect_language(text):
     """Detect language of the comment."""
@@ -176,7 +202,6 @@ def detect_language(text):
         return 'hindi' if lang == 'hi' else 'english'
     except LangDetectException:
         return 'unknown'
-
 
 def is_hinglish(text):
     """Check if the text is Hinglish by looking for common Hinglish words."""
@@ -187,20 +212,12 @@ def is_hinglish(text):
             return True
     return False
 
-
 def is_pure_english(text):
     """Check if the text is pure English by ensuring it contains no Hindi script or common Hindi words."""
-    # Check for Hindi script
     if hindi_script_pattern.search(text):
         return False
-
-    # Check for common Hindi words in lowercase
     words = text.lower().split()
-    if any(word in hinglish_dict.get(word[0], []) for word in words):
-        return False
-
-    return True
-
+    return not any(word in hinglish_dict.get(word[0], []) for word in words)
 
 # Read video IDs from id.csv
 video_ids = []
@@ -211,64 +228,49 @@ with open("id.csv", "r", encoding="utf-8") as id_file:
 
 print(f"Total video IDs to scrape: {len(video_ids)}")
 
-# Open CSV files for writing
-with open("hindi.csv", "w", newline="", encoding="utf-8") as hindi_file, \
-     open("english.csv", "w", newline="", encoding="utf-8") as english_file, \
-     open("hinglish.csv", "w", newline="", encoding="utf-8") as hinglish_file:
+# Scrape comments for each video ID
+for vid_id in video_ids:
+    print(f"Scraping comments for video ID: {vid_id}")
+    next_token = None
 
-    hindi_writer = csv.writer(hindi_file)
-    english_writer = csv.writer(english_file)
-    hinglish_writer = csv.writer(hinglish_file)
+    while True:
+        resp = get_comments(yt_client, vid_id, next_token)
 
-    # Write header row in all files
-    hindi_writer.writerow(["comments", "emoji"])
-    english_writer.writerow(["comments", "emoji"])
-    hinglish_writer.writerow(["comments", "emoji"])
+        if not resp:
+            break
 
-    # Counters for statistics
-    total_comments = 0
-    english_count = 0
-    hindi_count = 0
-    hinglish_count = 0
+        total_comments += len(resp["items"])
+        next_token = resp.get("nextPageToken")
+        if not next_token:
+            break
 
-    # Scrape comments for each video ID
-    for vid_id in video_ids:
-        print(f"Scraping comments for video ID: {vid_id}")
-        next_token = None
+        for i in resp["items"]:
+            comment_text = i["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
 
-        while True:
-            resp = get_comments(yt_client, vid_id, next_token)
+            # Extract emojis and clean comment
+            cleaned_comment, emojis = extract_emojis_and_clean(comment_text)
 
-            if not resp:
-                break
+            # Check if the cleaned comment contains any emoji
+            if emojis:
+                lang = detect_language(cleaned_comment)
 
-            total_comments += len(resp["items"])
-            next_token = resp.get("nextPageToken")
-            if not next_token:
-                break
-
-            for i in resp["items"]:
-                comment_text = i["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-
-                # Extract emojis and clean comment
-                cleaned_comment, emojis = extract_emojis_and_clean(comment_text)
-
-                # Check if the cleaned comment contains any emoji
-                if emojis:
-                    lang = detect_language(cleaned_comment)
-
-                    if lang == 'hindi':
-                        hindi_writer.writerow([cleaned_comment, emojis])
-                        hindi_count += 1
-                    elif is_hinglish(cleaned_comment):
-                        hinglish_writer.writerow([cleaned_comment, emojis])
-                        hinglish_count += 1
-                    elif lang == 'english' and is_pure_english(cleaned_comment):
-                        english_writer.writerow([cleaned_comment, emojis])
-                        english_count += 1
+                if lang == 'hindi':
+                    hindi_writer.writerow([cleaned_comment, emojis])
+                    hindi_count += 1
+                elif is_hinglish(cleaned_comment):
+                    hinglish_writer.writerow([cleaned_comment, emojis])
+                    hinglish_count += 1
+                elif lang == 'english' and is_pure_english(cleaned_comment):
+                    english_writer.writerow([cleaned_comment, emojis])
+                    english_count += 1
 
 # Print final counts
 print(f"Total comments processed: {total_comments}")
 print(f"Hindi comments: {hindi_count}")
 print(f"Hinglish comments: {hinglish_count}")
 print(f"English comments: {english_count}")
+
+# Close the CSV files
+hindi_file.close()
+english_file.close()
+hinglish_file.close()
