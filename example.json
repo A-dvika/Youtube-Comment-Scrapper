@@ -1,0 +1,32 @@
+
+
+
+
+{"kind": "youtube#commentThreadListResponse", 
+ "etag": "6kzS-p9lemLDyAQxqwhIdUAyOYU", 
+ "pageInfo": {"totalResults": 25, 
+              "resultsPerPage": 100},
+ "items": [{"kind": "youtube#commentThread",
+            "etag": "7F8Ml-QENg61A4fYHuzJCJTtHRs",
+            "id": "Ugzrh41689qU8x8u94V4AaABAg", 
+            "snippet": {"channelId": "UC4JX40jDee_tINbkjycV4Sg", 
+                        "videoId": "7pfRiFB__k8", 
+                        "topLevelComment": {"kind": "youtube#comment", 
+                                            "etag": "leksr5q-R5YvyF3PJzlr-NymaOw", 
+                                            "id": "Ugzrh41689qU8x8u94V4AaABAg", 
+                                            "snippet": {"channelId": "UC4JX40jDee_tINbkjycV4Sg", 
+                                                        "videoId": "7pfRiFB__k8", 
+                                                        "textDisplay": "Register for my FREE introduction to software development course to learn how to land a developer job as fast as possible! https://techwithtim.net/dev", 
+                                                        "textOriginal": "Register for my FREE introduction to software development course to learn how to land a developer job as fast as possible! https://techwithtim.net/dev", 
+                                                        "authorDisplayName": "@TechWithTim",
+                                                        "authorProfileImageUrl": "https://yt3.ggpht.com/ytc/APkrFKYHht64W4oJH1AaeZH7o5CBS2B2xLMTDrPyaN0TiA=s48-c-k-c0x00ffffff-no-rj", 
+                                                        "authorChannelUrl": "http://www.youtube.com/channel/UC4JX40jDee_tINbkjycV4Sg", 
+                                                        "authorChannelId": {"value": "UC4JX40jDee_tINbkjycV4Sg"}, 
+                                                        "canRate": true, 
+                                                        "viewerRating": "none", 
+                                                        "likeCount": 0, 
+                                                        "publishedAt": "2023-11-24T13:55:41Z", 
+                                                        "updatedAt": "2023-11-24T13:55:41Z"}}, 
+                                                        "canReply": true, 
+                                                        "totalReplyCount": 0, 
+                                                        "isPublic": true}}]}
